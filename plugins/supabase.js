@@ -12,5 +12,9 @@ module.exports = fp(async function (fastify, opts) {
     process.env.SUPABASE_URL,
     process.env.SUPABASE_KEY
   );
+  supabase.auth.signInWithPassword({
+    email: process.env.SUPABASE_EMAIL,
+    password: process.env.SUPABASE_PASSWORD,
+  });
   fastify.decorate("supabase", supabase);
 });
