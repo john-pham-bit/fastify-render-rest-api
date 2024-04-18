@@ -31,21 +31,25 @@ module.exports = async function (fastify, opts) {
   };
 
   fastify.get("/:character_name", { schema }, async function (request, reply) {
-    const { character_name } = request.params;
-    const { input } = request.query;
+    try {
+      const { character_name } = request.params;
+      const { input } = request.query;
 
-    const supabase = this.supabase; // Assuming you have injected Supabase client into Fastify
-    const { data, error } = await supabase
-      .from("move_data")
-      .select("character_name, input, move_name, startup, on_hit, on_block")
-      .eq("character_name", character_name)
-      .eq("input", input)
-      .limit(1);
+      const supabase = this.supabase; // Assuming you have injected Supabase client into Fastify
+      const { data, error } = await supabase
+        .from("move_data")
+        .select("character_name, input, move_name, startup, on_hit, on_block")
+        .eq("character_name", character_name)
+        .eq("input", input)
+        .limit(1);
 
-    if (error) {
-      throw new Error(error);
+      if (error) {
+        throw new Error(error);
+      }
+
+      return data[0]; // Return the first row
+    } catch (error) {
+      reply.send(error);
     }
-
-    return data[0]; // Return the first row
   });
 };
