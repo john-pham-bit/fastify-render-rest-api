@@ -23,6 +23,11 @@ module.exports = async function (fastify, opts) {
           input: { type: "string" },
           move_name: { type: "string" },
           startup: { type: "string" },
+          active: { type: "string" },
+          recovery: { type: "string" },
+          cancel: { type: "string" },
+          damage: { type: "string" },
+          guard: { type: "string" },
           on_hit: { type: "string" },
           on_block: { type: "string" },
         },
@@ -43,7 +48,9 @@ module.exports = async function (fastify, opts) {
         const supabase = this.supabase;
         const { data, error } = await supabase
           .from("move_data")
-          .select("character_name, input, move_name, startup, on_hit, on_block")
+          .select(
+            "character_name, input, move_name, startup, active, recovery, cancel, damage, guard, on_hit, on_block"
+          )
           .eq("character_name", character_name)
           .eq("input", input)
           .limit(1);
@@ -63,12 +70,32 @@ module.exports = async function (fastify, opts) {
   const putSchema = {
     body: {
       type: "object",
-      required: ["move_name", "startup"],
+      required: ["moves"],
       properties: {
-        move_name: { type: "string" },
-        startup: { type: "string" },
-        on_hit: { type: "string" },
-        on_block: { type: "string" },
+        moves: {
+          type: "array",
+          maxItems: 200,
+          items: {
+            type: "object",
+            properties: {
+              input: { type: "string" },
+              move_name: { type: "string" },
+              aliases: {
+                type: "array",
+                maxItems: 50,
+                items: { type: "string" },
+              },
+              startup: { type: "string" },
+              active: { type: "string" },
+              recovery: { type: "string" },
+              cancel: { type: "string" },
+              damage: { type: "string" },
+              guard: { type: "string" },
+              on_hit: { type: "string" },
+              on_block: { type: "string" },
+            },
+          },
+        },
       },
       additionalProperties: false,
     },
@@ -79,27 +106,38 @@ module.exports = async function (fastify, opts) {
   };
 
   fastify.put(
-    "/:character_name/:input",
+    "/:character_name",
     {
       schema: putSchema,
       onRequest: fastify.auth([fastify.authenticate]),
     },
     async function (request, reply) {
       try {
-        const characterName = request.params.character_name;
-        const input = request.params.input;
-        const data = request.body;
+        const character_name = request.params.character_name;
+        const moves = request.body.moves;
 
-        const { error } = await fastify.supabase.from("move_data").upsert([
-          {
-            character_name: characterName,
-            input: input,
-            move_name: data.move_name,
-            startup: data.startup,
-            on_hit: data.on_hit,
-            on_block: data.on_block,
-          },
-        ]);
+        const move_data_rows = [];
+
+        moves.forEach((move) => {
+          move_data_rows.push({
+            character_name: character_name,
+            input: move.input,
+            move_name: move.move_name,
+            aliases: move.aliases,
+            startup: move.startup,
+            active: move.active,
+            recovery: move.recovery,
+            cancel: move.cancel,
+            damage: move.damage,
+            guard: move.guard,
+            on_hit: move.on_hit,
+            on_block: move.on_block,
+          });
+        });
+
+        const { error } = await fastify.supabase
+          .from("move_data")
+          .upsert(move_data_rows);
 
         if (error) {
           console.error(error);
