@@ -2,8 +2,6 @@
 
 const { scryptSync } = require("crypto");
 const crypto = require("crypto");
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
 
 module.exports = async function (fastify, opts) {
   const schema = {
@@ -57,9 +55,8 @@ module.exports = async function (fastify, opts) {
       password = scryptSync(password, salt, 128).toString("hex");
 
       if (crypto.timingSafeEqual(Buffer.from(password), Buffer.from(key))) {
-        const accessToken = jwt.sign(
+        const accessToken = this.jwt.sign(
           { data: { username } },
-          process.env.JWT_SECRET,
           { expiresIn: "10m" }
         );
         return reply.send({ accessToken });
