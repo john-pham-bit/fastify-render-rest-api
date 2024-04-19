@@ -82,7 +82,7 @@ module.exports = async function (fastify, opts) {
     "/:character_name/:input",
     {
       schema: putSchema,
-      onRequest: [fastify.authenticate],
+      onRequest: fastify.auth([fastify.authenticate]),
     },
     async function (request, reply) {
       try {
