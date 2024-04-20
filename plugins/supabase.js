@@ -2,19 +2,12 @@
 
 const fp = require("fastify-plugin");
 const { createClient } = require("@supabase/supabase-js");
-require("dotenv").config();
-
-// the use of fastify-plugin is required to be able
-// to export the decorators to the outer scope
 
 module.exports = fp(async function (fastify, opts) {
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY
-  );
+  const supabase = createClient(opts["SUPABASE_URL"], opts["SUPABASE_KEY"]);
   supabase.auth.signInWithPassword({
-    email: process.env.SUPABASE_EMAIL,
-    password: process.env.SUPABASE_PASSWORD,
+    email: opts["SUPABASE_EMAIL"],
+    password: opts["SUPABASE_PASSWORD"],
   });
   fastify.decorate("supabase", supabase);
 });
